@@ -4,9 +4,17 @@ defmodule ProteinTranslation do
   """
   @spec of_rna(String.t()) :: { atom,  list(String.t()) }
   def of_rna(rna) do
-    String.codepoints(rna)
-    |> Enum.chunk(3)
-    |> Enum.map(fn(x) -> to_string(x) |> of_codon end)
+    rna = for {:ok, codon} <- String.codepoints(rna)
+        |> Enum.chunk(3)
+        |> Enum.map(fn(x) -> to_string(x) |> of_codon end) do
+      codon
+    end
+    |> Enum.take_while(fn x -> x != "STOP" end)
+
+    case rna do
+      [] -> {:error, "invalid RNA"}
+      x -> {:ok, x}
+    end
   end
 
   @doc """
@@ -51,7 +59,11 @@ defmodule ProteinTranslation do
       "UAG" => "STOP",
       "UGA" => "STOP"
     }
-    Map.fetch(valid_codons, codon)
+    result = Map.fetch(valid_codons, codon)
+    case result do
+      {:ok, _ } -> result
+      :error -> {:error, "invalid codon" }
+    end
   end
 end
 
