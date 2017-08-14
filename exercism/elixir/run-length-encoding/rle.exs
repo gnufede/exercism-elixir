@@ -8,16 +8,28 @@ defmodule RunLengthEncoder do
   """
   @spec encode(String.t) :: String.t
   def encode(string) do
+    Regex.split(~r'(\w)\1*', string, include_captures: true)
+    |> Enum.map_join(&encode_chunk(&1))
+  end
 
+  @spec encode_chunk(String.t) :: String.t
+  def encode_chunk(chunk) do
+    len = String.length(chunk)
+    if len > 1 do
+      Integer.to_string(len) <> String.first(chunk)
+    else
+      chunk
+    end
   end
 
   @spec decode(String.t) :: String.t
   def decode(string) do
     Regex.split(~r'(?=\d+)*(?<!\d)', string)
-    |> Enum.map_join(&chunk_decode(&1))
+    |> Enum.map_join(&decode_chunk(&1))
   end
 
-  def chunk_decode(chunk) do
+  @spec decode_chunk(String.t) :: String.t
+  def decode_chunk(chunk) do
     if String.length(chunk) <= 1 do
       chunk
     else
